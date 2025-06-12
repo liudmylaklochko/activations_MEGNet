@@ -23,17 +23,17 @@ def is_effectively_empty(value):
 def run_acivations(calculate_act = True):
 
     def get_activations_megnet(t):
-            if type(t) == tuple and len(t) > 1: t = t[0] # only the first one for now...
-            if type(t) == tuple and len(t) > 1: t = t[0] # can be a tuple in a tuple
-            if len(t.shape) == 1: return t.detach()
-            if len(t.shape) == 2:
-                if t.shape[0] == 1: return t[0].detach()
-                else: return torch.mean(t, dim=1) # could be other aggregation methods
-            if len(t.shape) == 3:
-                if t.shape[0] == 1 and t.shape[1] == 1: return t[0][0].detach()
-                else: return torch.mean(torch.mean(t, dim=2), dim=1).detach() # randomly, I don't think this happens
-            # print("!!!!!!!!!!!!", len(t.shape))
-            return None
+        if type(t) == tuple and len(t) > 1: t = t[0] # only the first one for now...
+        if type(t) == tuple and len(t) > 1: t = t[0] # can be a tuple in a tuple
+        if len(t.shape) == 1: return t.detach()
+        if len(t.shape) == 2:
+            if t.shape[0] == 1: return t[0].detach()
+            else: return torch.mean(t, dim=1) # could be other aggregation methods
+        if len(t.shape) == 3:
+            if t.shape[0] == 1 and t.shape[1] == 1: return t[0][0].detach()
+            else: return torch.mean(torch.mean(t, dim=2), dim=1).detach() # randomly, I don't think this happens
+        # print("!!!!!!!!!!!!", len(t.shape))
+        return None
 
 
     def unwrap_model(model):
@@ -89,20 +89,28 @@ def run_acivations(calculate_act = True):
             u.activation = {}
             with torch.no_grad():
                 pred = model.predict_structure(struct)
-            for layer in u.activation: 
-                if type(u.activation[layer]) == tuple: u.activation[layer] = u.activation[layer][0]
-                acts = u.activation[layer].to(device)
-                if config["aggregation"] == "flatten": 
-                    if u.activation[layer].dim() == 1: 
+            for layer in u.activation:
+                acts = get_activations_megnet(u.activation[layer])
+                if acts is None or len(acts) <= 1 : continue
+                # print(layer, "::", acts.shape)
+                # create a batch of batch_size
+                if layer not in batch: batch[layer] = []
+                else: 
+                    if len(batch[layer]) != 0 and len(acts) != len(batch[layer][0]):
                         print("Bad layer: ", layer)
-                        continue
-                    else:
-                        acts = torch.flatten(u.activation[layer], start_dim=1).to(device)
-                elif config["aggregation"] == "mean":
-                    if len(u.activation[layer].shape) > 2:
-                        acts = torch.mean(u.activation[layer], dim=1).to(device)
-                    else: acts = u.activation[layer].to(device)
-                call_back_global[layer].append(acts.cpu())   
+                        batch[layer][0] = []
+                    else: 
+                        batch[layer].append(acts)
+                if len(batch[layer]) >= config["batchsize"]:
+                    #print("layer batch", layer) 
+                    # print(len(batch[layer]))
+                    batch[layer] = []
+            count += 1
+
+            ## Got : torch.cat(batch['embedding.activation.ssp']).size() -> torch.Size([144]) 
+
+
+
 
             #for layer in u.activation:
             #    acts = get_activations_megnet(u.activation[layer])  
@@ -115,7 +123,6 @@ def run_acivations(calculate_act = True):
             #        else: 
             #            batch[layer].append(acts)
                            
-            count += 1
         call_back = {layer: acts for layer, acts in call_back_global.items() if layer in u.activation}        
         print("********  Storing activations  ********")
 
