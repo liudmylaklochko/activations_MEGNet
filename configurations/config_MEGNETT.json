@@ -1,0 +1,13 @@
+{   
+    "framework": "PyTorch",
+    "seed": 42,	
+
+    "path_to_train_data":"datasets/mp_structures_dataset.pkl",	
+    "slice": 100,		
+    "batchsize": 20,
+    		
+    
+    "actdir": "models/MATBENCH/MEGNET/activations/", 		
+    "aggregation" : "flatten"
+
+}

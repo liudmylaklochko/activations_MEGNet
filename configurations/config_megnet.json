@@ -1,0 +1,17 @@
+{   
+    "framework": "TensorFlow",
+    "seed": 42,	
+    "model": "models/MATBENCH/megnet_master/mvl_models/mp-2018.6.1/formation_energy.hdf5",
+    "modelclass": "models/MATBENCH/megnet_master/megnet/models/megnet.py",
+    "modelmodulename": "model",
+
+
+    "path_to_train_data":"datasets/mp_structures_dataset.pkl",	
+    "slice": 100,		
+    "batchsize": 2,
+    		
+    
+    "actdir": "models/MATBENCH/megnet_master/activations/", 		
+    "aggregation" : "flatten"
+
+}
