@@ -31,3 +31,5 @@ models/MATBENCH/modnet_master/modnet/data/MP_2018.6.zip
 models/MATBENCH/modnet_master/moddata/*
 models/MATBENCH/Finder_main/Finder/pre_trained/*
 models/MATBENCH/Finder_main/Finder/pre* 
+*.pt 
+backup/*
