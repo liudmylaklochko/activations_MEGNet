@@ -25,13 +25,37 @@ def get_activations_megnet(t):
     # print("!!!!!!!!!!!!", len(t.shape))
     return None
 
-def set_up_activations(model):
-    global activation
-    llayers = []
-    def get_activation(name):
-        def hook(model, input, output):
-            if type(output) != torch.Tensor: activation[name] = output
-            else: 
-                activation[name] = output.cpu().detach()
-                # print(name, activation[name].shape)
-        return hook
+
+def set_up_activations(model,framework):
+    if framework == 'PyTorch':
+        global activation
+        llayers = []
+        def get_activation(name):
+            def hook(model, input, output):
+                if type(output) != torch.Tensor: activation[name] = output
+                else: 
+                    activation[name] = output.cpu().detach()
+                    # print(name, activation[name].shape)
+            return hook
+
+        def rec_reg_hook(mo, prev="", lev=0):
+            for k in mo.__dict__["_modules"]:
+                name = prev+"."+k if prev != "" else k
+                nmo = getattr(mo,k)
+                nmo.register_forward_hook(get_activation(name))
+                #print("--"+"--"*lev, "hook added for",name)
+                llayers.append(name)
+                rec_reg_hook(nmo, prev=name, lev=lev+1)
+            return llayers
+        return rec_reg_hook(model)
+    elif framework == 'TensorFlow':
+        from tensorflow.keras.models import Model
+        layer_names=None
+        keras_model = model.model
+    if layer_names is None:
+        layer_names = [layer.name for layer in keras_model.layers if 'input' not in layer.name]
+
+    intermediate_model = Model(inputs=keras_model.input,outputs=[keras_model.get_layer(name).output for name in layer_names])
+    return intermediate_model, layer_names
+
+

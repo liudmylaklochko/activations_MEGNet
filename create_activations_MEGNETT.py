@@ -45,7 +45,7 @@ mpd_id = data["mp_ids"]
 print("********  Getting activations  ********") 
 
 u.activation = {}
-list_layers = u.set_up_activations(model)
+list_layers = u.set_up_activations(model,config['framework'])
 shuffle(structs)
 batch = {}
 
@@ -59,6 +59,7 @@ for i, struct in enumerate(structs):
     
     for layer in u.activation:
         acts = u.get_activations_megnet(u.activation[layer])
+        print(acts.size())
 
         if acts is None or len(acts) <= 1 : continue
         
