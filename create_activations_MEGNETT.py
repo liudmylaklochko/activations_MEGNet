@@ -46,29 +46,41 @@ print("********  Getting activations  ********")
 
 u.activation = {}
 list_layers = u.set_up_activations(model,config['framework'])
-shuffle(structs)
+
+
+material_idx = list(range(len(structs)))
+shuffle(material_idx)
+
 batch = {}
+batch_mp_ids = []
 
-
-for i, struct in enumerate(structs):
+for i, idx in enumerate(material_idx):
+    struct = structs[idx]
+    u.activation = {}
     if i %100 == 0:
         print(i) 
-    u.activation = {}
     with torch.no_grad():
         pred = model.predict_structure(struct)        
     
+    structure_added = False
+
     for layer in u.activation:
         acts = u.get_activations_megnet(u.activation[layer])
         print(acts.size())
 
         if acts is None or len(acts) <= 1 : continue
         
-        if layer not in batch: batch[layer] = []
+        if layer not in batch: 
+            batch[layer] = []
+            structure_added = True
         else: 
             if len(batch[layer]) != 0 and len(acts) != len(batch[layer][0]):
                 #print("Bad layer: ", layer)
                 batch[layer][0] = []
             else: 
                 batch[layer].append(acts)
-                
-torch.save(batch, 'activations.pt')
+                structure_added = True
+    if structure_added:
+        batch_mp_ids.append(mpd_id[idx])
+
+torch.save({'activations': batch, 'mp_ids': batch_mp_ids}, 'activations.pt')
