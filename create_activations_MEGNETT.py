@@ -49,7 +49,7 @@ list_layers = u.set_up_activations(model,config['framework'])
 
 
 material_idx = list(range(len(structs)))
-shuffle(material_idx)
+#shuffle(material_idx)
 
 batch = {}
 batch_mp_ids = []
@@ -58,7 +58,7 @@ for i, idx in enumerate(material_idx):
     struct = structs[idx]
     u.activation = {}
     if i %100 == 0:
-        print(i) 
+        print(i,"/",len(material_idx)) 
     with torch.no_grad():
         pred = model.predict_structure(struct)        
     
@@ -66,7 +66,7 @@ for i, idx in enumerate(material_idx):
 
     for layer in u.activation:
         acts = u.get_activations_megnet(u.activation[layer])
-        print(acts.size())
+        #print(acts.size())
 
         if acts is None or len(acts) <= 1 : continue
         
